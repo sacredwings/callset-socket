@@ -1,0 +1,5 @@
+# мое
+.idea
+/node_modules
+package-lock.json
+config.json
