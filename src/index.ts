@@ -18,7 +18,7 @@ const httpServer = http.createServer();
 // В продакшене нужно будет указать конкретный домен вашего Next.js приложения.
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000", // Ваш Next.js dev сервер
+        origin: ["http://localhost:3000", "https://nkvd.su"], // Ваш Next.js dev сервер
         methods: ["GET", "POST"]
     }
 });
