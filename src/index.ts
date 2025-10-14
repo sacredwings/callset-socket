@@ -1,12 +1,11 @@
 // @ts-nocheck
-import {mongo} from "../src/lib/connect";
-import {DB} from "../src/classes/db";
+import {mongo} from "../src/lib/connect"
 import { CUser } from "../src/classes/user"
 import { CAuth } from "../src/classes/auth"
-
 const http = require('http');
 const { Server } = require('socket.io'); // Используем деструктуризацию
 import Joi from "joi"
+import config from "../config.json"
 
 // --- КОНФИГУРАЦИЯ ---
 const PORT = process.env.PORT || 3001;
@@ -18,7 +17,7 @@ const httpServer = http.createServer();
 // В продакшене нужно будет указать конкретный домен вашего Next.js приложения.
 const io = new Server(httpServer, {
     cors: {
-        origin: ["http://localhost:3000", "https://nkvd.su"], // Ваш Next.js dev сервер
+        origin: config.server.cors, // Ваш Next.js dev сервер
         methods: ["GET", "POST"]
     }
 });
