@@ -2,16 +2,16 @@
 import {mongo} from "../src/lib/connect"
 import { CUser } from "../src/classes/user"
 import { CAuth } from "../src/classes/auth"
-const http = require('http');
-const { Server } = require('socket.io'); // Используем деструктуризацию
+import http from "http"
+import { Server } from "socket.io" // Используем деструктуризацию
 import Joi from "joi"
 import config from "../config.json"
 
 // --- КОНФИГУРАЦИЯ ---
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001
 // --------------------
 
-const httpServer = http.createServer();
+const httpServer = http.createServer()
 
 // Настройки CORS: Разрешаем подключения с вашего Next.js приложения (localhost:3000)
 // В продакшене нужно будет указать конкретный домен вашего Next.js приложения.
@@ -20,13 +20,13 @@ const io = new Server(httpServer, {
         origin: config.server.cors, // Ваш Next.js dev сервер
         methods: ["GET", "POST"]
     }
-});
+})
 mongo()
 
 // Простейший менеджер пользователей. В реальном приложении нужна более надежная структура.
 // { userId: socketId }
-let users = {};
-const userSockets = new Map();
+//let users = {};
+const userSockets = new Map()
 
 // Откуда мы можем получить ID другого пользователя, кому отправить offer/answer/candidate
 // В этом простом примере, мы будем просто искать любого другого подключенного пользователя.
@@ -77,7 +77,7 @@ io.use(async (socket, next) => {
 
     socket.userId = userId.toString()
 
-    return next(); // Продолжить соединение
+    return next() // Продолжить соединение
 
     /*
     if (tid && tkey) {
@@ -109,18 +109,18 @@ io.use(async (socket, next) => {
         console.log('No token provided. Rejecting connection.');
         return next(new Error('Authentication error: No token provided'));
     }*/
-});
+})
 
 io.on('connection', (socket) => {
-    console.log(`User ${socket.userId} connected (socket ID: ${socket.id})`);
+    console.log(`User ${socket.userId} connected (socket ID: ${socket.id})`)
 
     //console.log(userSockets)
 
     // Добавляем сокет в Map подключений пользователя
     if (!userSockets.has(socket.userId)) {
-        userSockets.set(socket.userId, new Set()); // Используем Set, чтобы избежать дубликатов сокетов
+        userSockets.set(socket.userId, new Set()) // Используем Set, чтобы избежать дубликатов сокетов
     }
-    userSockets.get(socket.userId).add(socket);
+    userSockets.get(socket.userId).add(socket)
 
 
     // --- Обработка предложения WebRTC ---
@@ -128,7 +128,7 @@ io.on('connection', (socket) => {
 
         if (receiverId) {
             // ... при отправке сообщения всем сокетам пользователя ...
-            const sockets = userSockets.get(receiverId);
+            const sockets = userSockets.get(receiverId)
 
             if (sockets) {
                 for (const sock of sockets) {
@@ -138,17 +138,17 @@ io.on('connection', (socket) => {
                 }
             }
         } else {
-            console.log('No receiver found for offer.');
+            console.log('No receiver found for offer.')
             // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
         }
-    });
+    })
 
     // --- Обработка ответа WebRTC ---
     socket.on('answer', (answer, receiverId) => {
         // Мы хотим передать ответ этому отправителю.
         if (receiverId) {
             // ... при отправке сообщения всем сокетам пользователя ...
-            const sockets = userSockets.get(receiverId);
+            const sockets = userSockets.get(receiverId)
             if (sockets) {
                 for (const sock of sockets) {
                     // Отправляем offer и ID отправителя, чтобы получатель мог ответить отправителю
@@ -157,9 +157,29 @@ io.on('connection', (socket) => {
                 }
             }
         } else {
-            console.log(`Sender ${receiverId} not found for answer.`);
+            console.log(`Sender ${receiverId} not found for answer.`)
         }
-    });
+    })
+
+    //
+    socket.on('offerСanceled', (receiverId) => {
+
+        if (receiverId) {
+            // ... при отправке сообщения всем сокетам пользователя ...
+            const sockets = userSockets.get(receiverId)
+
+            if (sockets) {
+                for (const sock of sockets) {
+                    // Отправляем offer и ID отправителя, чтобы получатель мог ответить отправителю
+                    //io.to(receiverId).emit('offer', offer, socket.id)
+                    sock.emit('offerСanceled', socket.userId)
+                }
+            }
+        } else {
+            console.log('No receiver.')
+            // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
+        }
+    })
 
     /*
     // Рассылаем всем сокетам этого пользователя
@@ -226,6 +246,10 @@ if (socketsForUser) {
         }
     });
  */
+
+
+    //---------------------------------------------------------------------------------------------
+    /*
     // --- Обработка ICE кандидатов ---
     socket.on('candidate', (candidate, senderId) => {
         // senderId - это ID того, кому мы хотим отправить candidate.
@@ -255,31 +279,31 @@ if (socketsForUser) {
             // Можно отправить сообщение обратно отправителю:
             // io.to(data.sender).emit('chat', { text: 'No one to send message to.', sender: 'server' });
         }
-    });
+    });*/
 
     // --- Управление пользователями ---
     // Здесь мы используем socket.id как идентификатор пользователя.
     // Это упрощенная модель. Для реального приложения, где пользователи
     // должны быть уникальными, вам нужно будет передавать `userId` при подключении
     // и сохранять его.
-    users[socket.id] = socket.id; // Сохраняем просто socket.id
+    //users[socket.id] = socket.id; // Сохраняем просто socket.id
 
 
 
     socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        delete users[socket.id]; // Удаляем пользователя при отключении
+        console.log('User disconnected:', socket.id)
+        //delete users[socket.id]; // Удаляем пользователя при отключении
 
-        const sockets = userSockets.get(socket.userId);
+        const sockets = userSockets.get(socket.userId)
         if (sockets) {
-            sockets.delete(socket);
+            sockets.delete(socket)
         }
 
         console.log(userSockets)
-    });
-});
+    })
+})
 
 // --- Запуск сервера ---
 httpServer.listen(PORT, () => {
-    console.log(`Signaling server listening on port ${PORT}`);
-});
+    console.log(`Signaling server listening on port ${PORT}`)
+})
