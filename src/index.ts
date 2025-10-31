@@ -161,6 +161,24 @@ io.on('connection', (socket) => {
         }
     })
 
+    // --- Обработка ответа WebRTC ---
+    socket.on('candidate', (candidate, receiverId) => {
+        // Мы хотим передать ответ этому отправителю.
+        if (receiverId) {
+            // ... при отправке сообщения всем сокетам пользователя ...
+            const sockets = userSockets.get(receiverId)
+            if (sockets) {
+                for (const sock of sockets) {
+                    // Отправляем offer и ID отправителя, чтобы получатель мог ответить отправителю
+                    //io.to(receiverId).emit('answer', answer, socket.id)
+                    sock.emit('candidate', candidate, socket.userId, socket.id)
+                }
+            }
+        } else {
+            console.log(`Sender ${receiverId} not found for candidate.`)
+        }
+    })
+
     //
     socket.on('offerСanceled', (receiverId) => {
 
