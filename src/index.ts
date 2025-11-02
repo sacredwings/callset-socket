@@ -122,6 +122,63 @@ io.on('connection', (socket) => {
     }
     userSockets.get(socket.userId).add(socket)
 
+    //
+    socket.on('callConnecting', (receiverId) => {
+        console.log(`User ${socket.userId} callConnecting (socket ID: ${socket.id}) to receiverId ${receiverId}`)
+        if (receiverId) {
+            //все сокеты пользователя
+            const sockets = userSockets.get(receiverId)
+
+            if (sockets) {
+                //каждому сокету пользователя
+                for (const sock of sockets) {
+                    sock.emit('callConnecting', socket.userId, socket.id)
+                }
+            }
+        } else {
+            console.log('No receiver.')
+            // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
+        }
+    })
+
+    //
+    socket.on('callConnected', (receiverId) => {
+        console.log(`User ${socket.userId} callConnected (socket ID: ${socket.id}) to receiverId ${receiverId}`)
+        if (receiverId) {
+            //все сокеты пользователя
+            const sockets = userSockets.get(receiverId)
+
+            if (sockets) {
+                //каждому сокету пользователя
+                for (const sock of sockets) {
+                    sock.emit('callConnected', socket.userId, socket.id)
+                }
+            }
+        } else {
+            console.log('No receiver.')
+            // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
+        }
+    })
+
+    //
+    socket.on('callDisconnected', (receiverId) => {
+
+        if (receiverId) {
+            // ... при отправке сообщения всем сокетам пользователя ...
+            const sockets = userSockets.get(receiverId)
+
+            if (sockets) {
+                for (const sock of sockets) {
+                    // Отправляем offer и ID отправителя, чтобы получатель мог ответить отправителю
+                    //io.to(receiverId).emit('offer', offer, socket.id)
+                    sock.emit('callDisconnected', socket.userId)
+                }
+            }
+        } else {
+            console.log('No receiver.')
+            // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
+        }
+    })
 
     // --- Обработка предложения WebRTC ---
     socket.on('offer', (offer, receiverId) => {
@@ -179,25 +236,7 @@ io.on('connection', (socket) => {
         }
     })
 
-    //
-    socket.on('offerСanceled', (receiverId) => {
 
-        if (receiverId) {
-            // ... при отправке сообщения всем сокетам пользователя ...
-            const sockets = userSockets.get(receiverId)
-
-            if (sockets) {
-                for (const sock of sockets) {
-                    // Отправляем offer и ID отправителя, чтобы получатель мог ответить отправителю
-                    //io.to(receiverId).emit('offer', offer, socket.id)
-                    sock.emit('offerСanceled', socket.userId)
-                }
-            }
-        } else {
-            console.log('No receiver.')
-            // Возможно, нужно отправить обратно отправителю сообщение "нет доступных пользователей"
-        }
-    })
 
     /*
     // Рассылаем всем сокетам этого пользователя
