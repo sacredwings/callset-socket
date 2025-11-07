@@ -123,7 +123,7 @@ io.on('connection', (socket) => {
     userSockets.get(socket.userId).add(socket)
 
     //
-    socket.on('callConnecting', (receiverId) => {
+    socket.on('callConnecting', (receiverId, media) => {
         console.log(`User ${socket.userId} callConnecting (socket ID: ${socket.id}) to receiverId ${receiverId}`)
         if (receiverId) {
             //все сокеты пользователя
@@ -132,7 +132,7 @@ io.on('connection', (socket) => {
             if (sockets) {
                 //каждому сокету пользователя
                 for (const sock of sockets) {
-                    sock.emit('callConnecting', socket.userId, socket.id)
+                    sock.emit('callConnecting', socket.userId, socket.id, media)
                 }
             }
         } else {
